@@ -1,0 +1,58 @@
+<mujoco model="scene">
+  <option timestep="0.005"/>
+  <include file="mevius.xml"/>
+
+  <!--
+  <default>
+    <joint armature="0.05" damping="1" limited="true" frictionloss="0.1"/>
+    <general dyntype="filterexact" dynprm="0.01"/>
+  </default>
+  -->
+
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6"  ambient="0.3 0.3 0.3" specular="0 0 0"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+    <global azimuth="120" elevation="-20"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512"
+        height="3072"/>
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="0.2 0.3 0.4"
+        rgb2="0.1 0.2 0.3" markrgb="0.8 0.8 0.8" width="300" height="300"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5"
+        reflectance="0.2"/>
+  </asset>
+
+  <worldbody>
+    <light pos="0 0 1.5" dir="0 0 -1" directional="true"/>
+    <geom name="floor" pos="0 0 0.0" size="0 0 0.05" type="plane" material="groundplane"/>
+
+    <!-- box object -->
+    <body name="box" pos="0.8 0.25 0.05">
+      <geom size="0.2 0.25 0.05" type="box" rgba="0.8 0.6 0.4 1"/>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <position name="FR_collar" kp="50" kv="2"   joint="FR_collar"/>
+    <position name="FR_hip"    kp="50" kv="2"   joint="FR_hip"   />
+    <position name="FR_knee"   kp="30" kv="0.5" joint="FR_knee"  />
+    <position name="FL_collar" kp="50" kv="2"   joint="FL_collar"/>
+    <position name="FL_hip"    kp="50" kv="2"   joint="FL_hip"   />
+    <position name="FL_knee"   kp="30" kv="0.5" joint="FL_knee"  />
+    <position name="BR_collar" kp="50" kv="2"   joint="BR_collar"/>
+    <position name="BR_hip"    kp="50" kv="2"   joint="BR_hip"   />
+    <position name="BR_knee"   kp="30" kv="0.5" joint="BR_knee"  />
+    <position name="BL_collar" kp="50" kv="2"   joint="BL_collar"/>
+    <position name="BL_hip"    kp="50" kv="2"   joint="BL_hip"   />
+    <position name="BL_knee"   kp="30" kv="0.5" joint="BL_knee"  />
+  </actuator>
+
+  <keyframe>
+    <key name="STANDBY"
+      qpos="0 0 0 0 0 0 0 -0.15 1.325 -2.8731 0.15 1.325 -2.8731 -0.15 1.325 -2.8731 0.15 1.325 -2.8731"
+      ctrl="-0.15 1.325 -2.8731 0.15 1.325 -2.8731 -0.15 1.325 -2.8731 0.15 1.325 -2.8731" />
+  </keyframe>
+
+</mujoco>

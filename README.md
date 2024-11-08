@@ -17,13 +17,17 @@ You can find all the hardware components in the following link
 Please install the following dependencies.
 - [ROS](https://www.ros.org/)
 - [realsense-ros](https://github.com/IntelRealSense/realsense-ros/tree/ros1-legacy)
-- [spacenav_node](https://wiki.ros.org/spacenav_node)
+- [spacenav_node](https://wiki.ros.org/spacenav_node) # optional
+- [virtual_joystick](https://github.com/aquahika/rqt_virtual_joystick) # optional
 - [urdfdom-py](https://github.com/ros/urdf_parser_py)
 - [legged_gym](https://github.com/leggedrobotics/legged_gym)
 
 Please install the following python packages.
 - bitstring
 - pytorch
+- scipy
+- mujoco
+- mujoco-python-viewer
 
 # Build
 ```
@@ -76,8 +80,13 @@ python3 scripts/mevius_main.py
 
 # in your local PC
 roslaunch spacenav_node classic.launch
-rostopic pub -1 /mevius_command std_msgs/String "data: 'STANDUP'"
-rostopic pub -1 /mevius_command std_msgs/String "data: 'WALK'"
+
+# Left Click: SITDOWN/STANDUP, Right Click: STANDUP/WALK
+
+# if you want to simulate the robot in mujoco
+python3 scripts/mevius_main.py --sim
+
+# please press D to turn off every-step rendering in mujoco viewer
 ```
 
 # Acknowledgements

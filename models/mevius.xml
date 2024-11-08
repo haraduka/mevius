@@ -1,0 +1,70 @@
+<mujoco model="mevius">
+  <compiler angle="radian"/>
+  <worldbody>
+    <body name="base_link" pos="0 0 0.5">
+      <inertial pos="-0.00288686 0 0.0628888" quat="-0.00465096 0.716052 0.0137655 0.697895" mass="7.46951" diaginertia="0.111398 0.0895517 0.0413663"/>
+      <joint name="base_joint" type="free" limited="false" actuatorfrclimited="false"/>
+      <geom size="0.167 0.1 0.075" pos="0 0 0.075" type="box" rgba="0.898039 0.917647 0.929412 1"/>
+      <body name="FR_scapula_link" pos="0.16405 -0.072 0.0565">
+        <inertial pos="0.0516252 0.0119 0.000134643" quat="0.645629 0.00294725 0.00291678 0.76364" mass="0.792389" diaginertia="0.000956565 0.000655523 0.000624286"/>
+        <joint name="FR_collar" pos="0 0 0" axis="1 0 0" range="-0.7854 0.7854" actuatorfrcrange="-25 25" armature="4.14e-3"/>
+        <geom size="0.05 0.04" pos="0.06 -0.03 0" quat="0.707388 0.706825 0 0" type="cylinder" rgba="0.898039 0.917647 0.929412 1"/>
+        <body name="FR_thigh_link" pos="0.0555 -0.01205 0">
+          <inertial pos="-0.00458316 -0.0450237 -0.0462116" quat="0.707562 0.00759254 0.00814229 0.706564" mass="1.28036" diaginertia="0.00514578 0.00466467 0.000731296"/>
+          <joint name="FR_hip" pos="0 0 0" axis="0 1 0" range="0 1.5708" actuatorfrcrange="-25 25" armature="4.14e-3"/>
+          <body name="FR_calf_link" pos="0 -0.06555 -0.25">
+            <inertial pos="0.00460409 3.43409e-06 -0.150039" quat="0.706597 0.00358695 0.00364389 0.707598" mass="0.151513" diaginertia="0.00106111 0.00105823 1.12276e-05"/>
+            <joint name="FR_knee" pos="0 0 0" axis="0 1 0" range="-2.8745 -1.08" actuatorfrcrange="-25 25" armature="4.14e-3"/>
+            <geom size="0.01 0.115" pos="0.008 0 -0.1" type="cylinder" rgba="0.752941 0.752941 0.752941 1"/>
+            <geom size="0.019" pos="0.003 0 -0.235" rgba="1 0 0 1"/>
+          </body>
+        </body>
+      </body>
+      <body name="FL_scapula_link" pos="0.16405 0.072 0.0565">
+        <inertial pos="0.0516252 -0.0119 0.000157365" quat="0.76357 0.0106903 0.00893315 0.645574" mass="0.792389" diaginertia="0.000956565 0.000655546 0.000624264"/>
+        <joint name="FL_collar" pos="0 0 0" axis="1 0 0" range="-0.7854 0.7854" actuatorfrcrange="-25 25" armature="4.14e-3"/>
+        <geom size="0.05 0.04" pos="0.06 0.03 0" quat="0.707388 0.706825 0 0" type="cylinder" rgba="0.898039 0.917647 0.929412 1"/>
+        <body name="FL_thigh_link" pos="0.0555 0.01205 0">
+          <inertial pos="-0.004596 0.0450237 -0.0462263" quat="0.706606 0.00830196 0.00769707 0.707517" mass="1.28036" diaginertia="0.00514578 0.00466509 0.000730872"/>
+          <joint name="FL_hip" pos="0 0 0" axis="0 1 0" range="0 1.5708" actuatorfrcrange="-25 25" armature="4.14e-3"/>
+          <body name="FL_calf_link" pos="0 0.06555 -0.25">
+            <inertial pos="0.00460409 3.43409e-06 -0.150039" quat="0.706597 0.00358695 0.00364389 0.707598" mass="0.151513" diaginertia="0.00106111 0.00105823 1.12276e-05"/>
+            <joint name="FL_knee" pos="0 0 0" axis="0 1 0" range="-2.8745 -1.08" actuatorfrcrange="-25 25" armature="4.14e-3"/>
+            <geom size="0.01 0.115" pos="0.008 0 -0.1" type="cylinder" rgba="0.752941 0.752941 0.752941 1"/>
+            <geom size="0.019" pos="0.003 0 -0.235" rgba="1 0 0 1"/>
+          </body>
+        </body>
+      </body>
+      <body name="BR_scapula_link" pos="-0.16405 -0.072 0.0565">
+        <inertial pos="-0.051625 0.0119 -0.00013464" quat="0.76364 0.00291667 0.00294715 0.645629" mass="0.79239" diaginertia="0.000956567 0.000655526 0.000624288"/>
+        <joint name="BR_collar" pos="0 0 0" axis="1 0 0" range="-0.7854 0.7854" actuatorfrcrange="-25 25" armature="4.14e-3"/>
+        <geom size="0.05 0.04" pos="-0.06 -0.03 0" quat="0.707388 0.706825 0 0" type="cylinder" rgba="0.898039 0.917647 0.929412 1"/>
+        <body name="BR_thigh_link" pos="-0.0555 -0.01205 0">
+          <inertial pos="-0.0038406 -0.045024 -0.046019" quat="0.706497 0.00770251 0.00826389 0.707626" mass="1.2804" diaginertia="0.0051458 0.004665 0.000730982"/>
+          <joint name="BR_hip" pos="0 0 0" axis="0 1 0" range="0 1.5708" actuatorfrcrange="-25 25" armature="4.14e-3"/>
+          <body name="BR_calf_link" pos="0 -0.06555 -0.25">
+            <inertial pos="0.00460409 3.43409e-06 -0.150039" quat="0.706597 0.00358695 0.00364389 0.707598" mass="0.151513" diaginertia="0.00106111 0.00105823 1.12276e-05"/>
+            <joint name="BR_knee" pos="0 0 0" axis="0 1 0" range="-2.8745 -1.08" actuatorfrcrange="-25 25" armature="4.14e-3"/>
+            <geom size="0.01 0.115" pos="0.008 0 -0.1" type="cylinder" rgba="0.752941 0.752941 0.752941 1"/>
+            <geom size="0.019" pos="0.003 0 -0.235" rgba="1 0 0 1"/>
+          </body>
+        </body>
+      </body>
+      <body name="BL_scapula_link" pos="-0.16405 0.072 0.0565">
+        <inertial pos="-0.0516252 -0.0119 -0.000157365" quat="0.645574 0.00893315 0.0106903 0.76357" mass="0.792389" diaginertia="0.000956565 0.000655546 0.000624264"/>
+        <joint name="BL_collar" pos="0 0 0" axis="1 0 0" range="-0.7854 0.7854" actuatorfrcrange="-25 25" armature="4.14e-3"/>
+        <geom size="0.05 0.04" pos="-0.06 0.03 0" quat="0.707388 0.706825 0 0" type="cylinder" rgba="0.898039 0.917647 0.929412 1"/>
+        <body name="BL_thigh_link" pos="-0.0555 0.01205 0">
+          <inertial pos="-0.00390162 0.0450237 -0.0460663" quat="0.707686 0.00808874 0.00759905 0.70644" mass="1.28036" diaginertia="0.00514578 0.00466466 0.000731305"/>
+          <joint name="BL_hip" pos="0 0 0" axis="0 1 0" range="0 1.5708" actuatorfrcrange="-25 25" armature="4.14e-3"/>
+          <body name="BL_calf_link" pos="0 0.06555 -0.25">
+            <inertial pos="0.00460409 3.43409e-06 -0.150039" quat="0.706597 0.00358695 0.00364389 0.707598" mass="0.151513" diaginertia="0.00106111 0.00105823 1.12276e-05"/>
+            <joint name="BL_knee" pos="0 0 0" axis="0 1 0" range="-2.8745 -1.08" actuatorfrcrange="-25 25" armature="4.14e-3"/>
+            <geom size="0.01 0.115" pos="0.008 0 -0.1" type="cylinder" rgba="0.752941 0.752941 0.752941 1"/>
+            <geom size="0.019" pos="0.003 0 -0.235" rgba="1 0 0 1"/>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+</mujoco>
