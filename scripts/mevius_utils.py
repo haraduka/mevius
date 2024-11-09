@@ -5,15 +5,8 @@ import numpy as np
 import torch
 from isaacgym_torch_utils import quat_apply, quat_rotate_inverse, get_axis_params
 from legged_gym_math import quat_apply_yaw, wrap_to_pi, torch_rand_sqrt_float
+import parameters as P
 
-# copied from legged_gym
-class control:
-    stiffness = {'collar': 50.0, 'hip': 50.0, 'knee': 30.}  # [N*m/rad]
-    damping = {'collar': 2.0, 'hip': 2.0, 'knee': 0.2}  # [N*m*s/rad]
-    # action scale: target angle = actionScale * action + defaultAngle
-    action_scale = 0.5
-    # decimation: Number of control action updates @ sim DT per policy DT
-    decimation = 4
 
 # copied from legged_gym
 class normalization:
@@ -25,25 +18,6 @@ class normalization:
         height_measurements = 5.0
     clip_observations = 100.
     clip_actions = 100.
-
-# copied from legged_gym
-class init_state:
-    default_joint_angles = [
-             0.1, 1.0, -1.4, # BL
-            -0.1, 1.0, -1.4, # BR
-             0.1, 0.8, -1.4, # FL
-            -0.1, 0.8, -1.4, # FR
-            ]
-
-# copied from legged_gym
-class commands:
-    num_commands = 4 # default: lin_vel_x, lin_vel_y, ang_vel_yaw, heading (in heading mode ang_vel_yaw is recomputed from heading error)
-    heading_command = False # if true: compute ang vel command from heading error
-    class ranges:
-        lin_vel_x = [-1.0, 1.0] # min max [m/s]
-        lin_vel_y = [-1.0, 1.0] # min max [m/s]
-        ang_vel_yaw = [-1.0, 1.0] # min max [rad/s]
-        heading = [-3.14, 3.14]
 
 def get_urdf_joint_params(urdf_path, joint_names):
     if isinstance(urdf_path, str) and urdf_path.endswith('.urdf'):
@@ -88,7 +62,7 @@ def test_read_torch_policy():
 
 def get_policy_observation(base_quat_, base_lin_vel_, base_ang_vel_, command_, dof_pos_, dof_vel_, actions_):
     obs_scales = normalization.obs_scales
-    default_dof_pos = torch.tensor(init_state.default_joint_angles, dtype=torch.float32)
+    default_dof_pos = torch.tensor(P.DEFAULT_ANGLE, dtype=torch.float32)
 
     forward_vec = torch.tensor([1., 0., 0.], dtype=torch.float, requires_grad=False).reshape(1, -1)
     gravity_vec = torch.tensor(get_axis_params(-1., 2), dtype=torch.float, requires_grad=False).reshape(1, -1)
@@ -110,7 +84,7 @@ def get_policy_observation(base_quat_, base_lin_vel_, base_ang_vel_, command_, d
     # print(base_ang_vel.numpy()[0])
     # print(projected_gravity.numpy()[0])
 
-    if commands.heading_command:
+    if P.commands.heading_command:
         forward = quat_apply(base_quat, forward_vec)
         heading = torch.atan2(forward[:, 1], forward[:, 0])
         command[:, 2] = torch.clip(0.5*wrap_to_pi(command[:, 3] - heading), -1., 1.)
@@ -147,7 +121,7 @@ def test_get_policy_output():
     base_lin_vel = [0.0, 0.0, 0.0]
     base_ang_vel = [0.0, 0.0, 0.0]
     command = [0.0, 0.0, 0.0, 0.0]
-    dof_pos = init_state.default_joint_angles
+    dof_pos = P.DEFAULT_ANGLE
     dof_vel = [0]*12
     actions = [0]*12
     obs = get_policy_observation(base_quat, base_lin_vel, base_ang_vel, command, dof_pos, dof_vel, actions)

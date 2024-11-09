@@ -14,49 +14,11 @@ from nav_msgs.msg import Odometry
 from tmotor_lib import CanMotorController
 from mevius.msg import MeviusLog
 import mevius_utils
+import parameters as P
 
 # TODO add terminal display of thermometer, etc.
 
 np.set_printoptions(precision=3)
-
-################ constant ##################
-
-
-CAN_ID = [
-        10, 11, 12,
-        7, 8, 9,
-        4, 5, 6,
-        1, 2, 3,
-        ]
-JOINT_NAME = [
-        'BL_collar', 'BL_hip', 'BL_knee',
-        'BR_collar', 'BR_hip', 'BR_knee',
-        'FL_collar', 'FL_hip', 'FL_knee',
-        'FR_collar', 'FR_hip', 'FR_knee',
-        ]
-MOTOR_DIR = [
-        1, -1, -1,
-        1,  1,  1,
-        -1, -1, -1,
-        -1,  1,  1,
-        ]
-STANDBY_ANGLE = [
-         0.2222, 1.2710, -2.8754,
-        -0.2222, 1.2710, -2.8754,
-         0.2398, 1.3063, -2.8754,
-        -0.2398, 1.3063, -2.8754,
-        ]
-DEFAULT_ANGLE = mevius_utils.init_state.default_joint_angles[:]
-DEBUG_ANGLE = [
-        0.4, 0.8, -1.4,
-        -0.4, 0.8, -1.4,
-        0.2, 0.8, -1.4,
-        -0.2, 0.8, -1.4,
-        ]
-CONTROL_HZ = 50
-CAN_HZ = 50
-
-################ class ##################
 
 class RobotState:
     def __init__(self, n_motor=12):
@@ -86,11 +48,11 @@ class RobotCommand:
         self.kp = []
         self.kd = []
         self.coef = 1.0
-        for name in JOINT_NAME:
-            for key in mevius_utils.control.stiffness.keys():
+        for name in P.JOINT_NAME:
+            for key in P.control.stiffness.keys():
                 if key in name:
-                    self.kp.append(mevius_utils.control.stiffness[key]*self.coef)
-                    self.kd.append(mevius_utils.control.damping[key]*self.coef)
+                    self.kp.append(P.control.stiffness[key]*self.coef)
+                    self.kd.append(P.control.damping[key]*self.coef)
         assert len(self.kp) == n_motor
         assert len(self.kd) == n_motor
         self.torque = [0.0] * n_motor
@@ -118,14 +80,14 @@ def command_callback(command, robot_state, robot_command):
                     robot_command.command = "STANDUP"
                     with robot_state.lock:
                         robot_command.initial_angle = robot_state.angle[:]
-                        robot_command.final_angle = DEFAULT_ANGLE[:]
+                        robot_command.final_angle = P.DEFAULT_ANGLE[:]
                         robot_command.interpolating_time = 3.0
                         robot_command.remaining_time = robot_command.interpolating_time
                 elif prev_command == "STANDUP":
                     robot_command.command = "STANDBY"
                     with robot_state.lock:
                         robot_command.initial_angle = robot_state.angle[:]
-                        robot_command.final_angle = STANDBY_ANGLE[:]
+                        robot_command.final_angle = P.STANDBY_ANGLE[:]
                         robot_command.interpolating_time = 3.0
                         robot_command.remaining_time = robot_command.interpolating_time
     elif command == "STANDUP-WALK":
@@ -139,7 +101,7 @@ def command_callback(command, robot_state, robot_command):
                     robot_command.command = "STANDUP"
                     with robot_state.lock:
                         robot_command.initial_angle = robot_state.angle[:]
-                        robot_command.final_angle = DEFAULT_ANGLE[:]
+                        robot_command.final_angle = P.DEFAULT_ANGLE[:]
                         robot_command.interpolating_time = 3.0
                         robot_command.remaining_time = robot_command.interpolating_time
     elif command == "STANDBY":
@@ -147,21 +109,21 @@ def command_callback(command, robot_state, robot_command):
             robot_command.command = "STANDBY"
             with robot_state.lock:
                 robot_command.initial_angle = robot_state.angle[:]
-                robot_command.final_angle = STANDBY_ANGLE[:]
+                robot_command.final_angle = P.STANDBY_ANGLE[:]
                 robot_command.interpolating_time = 3.0
                 robot_command.remaining_time = robot_command.interpolating_time
     elif command == "STANDUP":
             robot_command.command = "STANDUP"
             with robot_state.lock:
                 robot_command.initial_angle = robot_state.angle[:]
-                robot_command.final_angle = DEFAULT_ANGLE[:]
+                robot_command.final_angle = P.DEFAULT_ANGLE[:]
                 robot_command.interpolating_time = 3.0
                 robot_command.remaining_time = robot_command.interpolating_time
     elif command == "DEBUG":
             robot_command.command = "DEBUG"
             with robot_state.lock:
                 robot_command.initial_angle = robot_state.angle[:]
-                robot_command.final_angle = DEBUG_ANGLE[:]
+                robot_command.final_angle = P.DEBUG_ANGLE[:]
                 robot_command.interpolating_time = 3.0
                 robot_command.remaining_time = robot_command.interpolating_time
     elif prev_command == "STANDUP" and command == "WALK":
@@ -228,18 +190,18 @@ def main_controller(robot_state, robot_command, peripherals_state):
     policy = mevius_utils.read_torch_policy(policy_path).to("cpu")
 
     urdf_fullpath = os.path.join(os.path.dirname(__file__), "../models/mevius.urdf")
-    joint_params = mevius_utils.get_urdf_joint_params(urdf_fullpath, JOINT_NAME)
+    joint_params = mevius_utils.get_urdf_joint_params(urdf_fullpath, P.JOINT_NAME)
 
     is_safe = True
     last_actions = [0.0] * 12 # TODO initialize
 
-    rate = rospy.Rate(CONTROL_HZ)
+    rate = rospy.Rate(P.CONTROL_HZ)
     while not rospy.is_shutdown():
         with robot_command.lock:
             command = robot_command.command
         if command in ["STANDBY", "STANDUP", "DEBUG"]:
             with robot_command.lock:
-                robot_command.remaining_time -= 1.0/CONTROL_HZ
+                robot_command.remaining_time -= 1.0/P.CONTROL_HZ
                 robot_command.remaining_time = max(0, robot_command.remaining_time)
                 if robot_command.remaining_time <= 0:
                     pass
@@ -248,7 +210,7 @@ def main_controller(robot_state, robot_command, peripherals_state):
                     robot_command.angle = [a + (b-a)*ratio for a, b in zip(robot_command.initial_angle, robot_command.final_angle)]
         elif command in ["WALK"]:
             with robot_command.lock:
-                robot_command.remaining_time -= 1.0/CONTROL_HZ
+                robot_command.remaining_time -= 1.0/P.CONTROL_HZ
                 robot_command.remaining_time = max(0, robot_command.remaining_time)
 
             with peripherals_state.lock:
@@ -256,7 +218,7 @@ def main_controller(robot_state, robot_command, peripherals_state):
                 base_lin_vel = peripherals_state.body_vel[:]
                 base_ang_vel = peripherals_state.body_gyro[:]
 
-                ranges = mevius_utils.commands.ranges
+                ranges = P.commands.ranges
                 coefs = [ranges.lin_vel_x[1], ranges.lin_vel_y[1], ranges.ang_vel_yaw[1], ranges.heading[1]]
                 if peripherals_state.spacenav_enable:
                     nav = peripherals_state.spacenav[:]
@@ -304,15 +266,15 @@ def main_controller(robot_state, robot_command, peripherals_state):
             # print(base_quat, base_lin_vel, base_ang_vel, commands, dof_pos, dof_vel, last_actions)
             obs = mevius_utils.get_policy_observation(base_quat, base_lin_vel, base_ang_vel, commands, dof_pos, dof_vel, last_actions)
             actions = mevius_utils.get_policy_output(policy, obs)
-            scaled_actions = mevius_utils.control.action_scale * actions
+            scaled_actions = P.control.action_scale * actions
 
         if command in ["WALK"]:
-            ref_angle = [a + b for a, b in zip(scaled_actions, DEFAULT_ANGLE[:])]
+            ref_angle = [a + b for a, b in zip(scaled_actions, P.DEFAULT_ANGLE[:])]
             with robot_state.lock:
                 for i in range(len(ref_angle)):
                     if robot_state.angle[i]  < joint_params[i][0] or robot_state.angle[i] > joint_params[i][1]:
                         ref_angle[i] = max(joint_params[i][0]+0.1, min(ref_angle[i], joint_params[i][1]-0.1))
-                        print("# Joint {} out of range: {:.3f}".format(JOINT_NAME[i], robot_state.angle[i]))
+                        print("# Joint {} out of range: {:.3f}".format(P.JOINT_NAME[i], robot_state.angle[i]))
             with robot_command.lock:
                 robot_command.angle = ref_angle
 
@@ -331,12 +293,12 @@ def can_communication(robot_state, robot_command, peripherals_state):
     n_motor = 12
     motors = [None]*n_motor
     for i in range(n_motor):
-        motors[i] = CanMotorController("can0", CAN_ID[i], motor_type=motor_type, motor_dir=MOTOR_DIR[i])
+        motors[i] = CanMotorController("can0", P.CAN_ID[i], motor_type=motor_type, motor_dir=P.MOTOR_DIR[i])
 
     print("Enabling Motors...")
     for i, motor in enumerate(motors):
         pos, vel, cur, tem = motor.enable_motor()
-        print("Enabling Motor {} [Status] Pos: {:.3f}, Vel: {:.3f}, Cur: {:.3f}, Temp: {:.3f}".format(JOINT_NAME[i], pos, vel, cur, tem))
+        print("Enabling Motor {} [Status] Pos: {:.3f}, Vel: {:.3f}, Cur: {:.3f}, Temp: {:.3f}".format(P.JOINT_NAME[i], pos, vel, cur, tem))
         with robot_state.lock:
             robot_state.angle[i] = pos
             robot_state.velocity[i] = vel
@@ -348,22 +310,22 @@ def can_communication(robot_state, robot_command, peripherals_state):
 
     print("Setting Initial Offset...")
     for i, motor in enumerate(motors):
-        motor.set_angle_offset(STANDBY_ANGLE[i], deg=False)
+        motor.set_angle_offset(P.STANDBY_ANGLE[i], deg=False)
         # motor.set_angle_range(joint_params[i][0], joint_params[i][1], deg=False)
 
     with robot_state.lock:
-        robot_state.angle = STANDBY_ANGLE[:]
+        robot_state.angle = P.STANDBY_ANGLE[:]
 
     with robot_command.lock:
         robot_command.command = "STANDBY"
-        robot_command.angle = STANDBY_ANGLE[:]
-        robot_command.initial_angle = STANDBY_ANGLE[:]
-        robot_command.final_angle = STANDBY_ANGLE[:]
+        robot_command.angle = P.STANDBY_ANGLE[:]
+        robot_command.initial_angle = P.STANDBY_ANGLE[:]
+        robot_command.final_angle = P.STANDBY_ANGLE[:]
         robot_command.interpolating_time = 3.0
         robot_command.remaining_time = robot_command.interpolating_time
         robot_command.initialized = True
 
-    rate = rospy.Rate(CAN_HZ)
+    rate = rospy.Rate(P.CAN_HZ)
 
     error_count = [0]*12
     while not rospy.is_shutdown():
@@ -391,7 +353,7 @@ def can_communication(robot_state, robot_command, peripherals_state):
                 pos, vel, cur, tem = motor.send_rad_command(ref_angle[i], ref_velocity[i], ref_kp[i], ref_kd[i], ref_torque[i])
             except:
                 error_count[i] += 1
-                print("# Can Reciver is Failed for {}, ({})".format(JOINT_NAME[i], error_count[i]))
+                print("# Can Reciver is Failed for {}, ({})".format(P.JOINT_NAME[i], error_count[i]))
                 continue
             pos_list[i] = pos
             vel_list[i] = vel
@@ -404,7 +366,7 @@ def can_communication(robot_state, robot_command, peripherals_state):
             robot_state.current = cur_list
             robot_state.temperature = tem_list
 
-        jointstate_msg.name = JOINT_NAME
+        jointstate_msg.name = P.JOINT_NAME
         jointstate_msg.position = pos_list
         jointstate_msg.velocity = vel_list
         jointstate_msg.effort = cur_list
@@ -431,8 +393,8 @@ def can_communication(robot_state, robot_command, peripherals_state):
 
         # rate.sleep()
         end_time = time.time()
-        if end_time - start_time < 1.0/CAN_HZ:
-            time.sleep(1.0/CAN_HZ - (end_time - start_time))
+        if end_time - start_time < 1.0/P.CAN_HZ:
+            time.sleep(1.0/P.CAN_HZ - (end_time - start_time))
             # end_time = time.time()
             # print(end_time-start_time)
 
@@ -452,7 +414,7 @@ def sim_communication(robot_state, robot_command, peripherals_state):
 
     mujoco_joint_names = [model.joint(i).name for i in range(model.njnt)]
     with robot_state.lock:
-        for i, name in enumerate(JOINT_NAME):
+        for i, name in enumerate(P.JOINT_NAME):
             idx = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_ACTUATOR, name)
             robot_state.angle[i] = data.qpos[7+idx]
             robot_state.velocity[i] = data.qvel[6+idx]
@@ -460,21 +422,21 @@ def sim_communication(robot_state, robot_command, peripherals_state):
             robot_state.temperature[i] = 25.0
 
     mujoco_actuator_names = [model.actuator(i).name for i in range(model.nu)]
-    for i, name in enumerate(JOINT_NAME):
+    for i, name in enumerate(P.JOINT_NAME):
         idx = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_ACTUATOR, name)
-        data.ctrl[idx] = STANDBY_ANGLE[i]
+        data.ctrl[idx] = P.STANDBY_ANGLE[i]
 
     state_pub = rospy.Publisher("mevius_log", MeviusLog, queue_size=2)
     jointstate_pub = rospy.Publisher("joint_states", JointState, queue_size=2)
 
     with robot_state.lock:
-        robot_state.angle = STANDBY_ANGLE[:]
+        robot_state.angle = P.STANDBY_ANGLE[:]
 
     with robot_command.lock:
         robot_command.command = "STANDBY"
-        robot_command.angle = STANDBY_ANGLE[:]
-        robot_command.initial_angle = STANDBY_ANGLE[:]
-        robot_command.final_angle = STANDBY_ANGLE[:]
+        robot_command.angle = P.STANDBY_ANGLE[:]
+        robot_command.initial_angle = P.STANDBY_ANGLE[:]
+        robot_command.final_angle = P.STANDBY_ANGLE[:]
         robot_command.interpolating_time = 3.0
         robot_command.remaining_time = robot_command.interpolating_time
         robot_command.initialized = True
@@ -500,7 +462,7 @@ def sim_communication(robot_state, robot_command, peripherals_state):
             ref_torque = robot_command.torque[:]
 
         mujoco_actuator_names = [model.actuator(i).name for i in range(model.nu)]
-        for i, name in enumerate(JOINT_NAME): # mevius
+        for i, name in enumerate(P.JOINT_NAME): # mevius
             if name in mujoco_actuator_names: # mujoco
                 idx = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_ACTUATOR, name) # mujoco
                 data.ctrl[idx] = ref_angle[i]
@@ -508,7 +470,7 @@ def sim_communication(robot_state, robot_command, peripherals_state):
         mujoco.mj_step(model, data)
 
         with robot_state.lock:
-            for i, name in enumerate(JOINT_NAME):
+            for i, name in enumerate(P.JOINT_NAME):
                 if name in mujoco_joint_names:
                     idx = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_ACTUATOR, name)
                     robot_state.angle[i] = data.qpos[7+idx]
@@ -522,7 +484,7 @@ def sim_communication(robot_state, robot_command, peripherals_state):
             msg.current = robot_state.current[:]
             msg.temperature = robot_state.temperature[:]
 
-        jointstate_msg.name = JOINT_NAME
+        jointstate_msg.name = P.JOINT_NAME
         jointstate_msg.position = msg.angle
         jointstate_msg.velocity = msg.velocity
         jointstate_msg.effort = msg.current
