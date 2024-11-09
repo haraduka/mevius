@@ -5,6 +5,7 @@ import select
 import time
 import threading
 import numpy as np
+import torch
 
 import rospy
 from scipy.spatial.transform import Rotation
@@ -14,11 +15,12 @@ from nav_msgs.msg import Odometry
 from tmotor_lib import CanMotorController
 from mevius.msg import MeviusLog
 import mevius_utils
+import cpg_utils
 import parameters as P
 
 # TODO add terminal display of thermometer, etc.
 
-np.set_printoptions(precision=3)
+np.set_printoptions(precision=3, suppress=True)
 
 class RobotState:
     def __init__(self, n_motor=12):
@@ -154,6 +156,14 @@ def realsense_acc_callback(msg, params):
         # for realsenes arrangement
         peripherals_state.body_acc = [msg.linear_acceleration.z, msg.linear_acceleration.x, msg.linear_acceleration.y]
 
+def realsense_imu_callback(msg, params):
+    peripherals_state = params
+    with peripherals_state.lock:
+        peripherals_state.body_quat = [msg.orientation.x, msg.orientation.y, msg.orientation.z, msg.orientation.w]
+        peripherals_state.body_gyro = [msg.angular_velocity.x, msg.angular_velocity.y, msg.angular_velocity.z]
+        peripherals_state.body_acc = [msg.linear_acceleration.x, msg.linear_acceleration.y, msg.linear_acceleration.z]
+        peripherals_state.realsense_last_time = time.time()
+
 def virtual_joy_callback(msg, params):
     peripherals_state = params
     with peripherals_state.lock:
@@ -194,6 +204,8 @@ def main_controller(robot_state, robot_command, peripherals_state):
 
     is_safe = True
     last_actions = [0.0] * 12 # TODO initialize
+    hidden = torch.zeros(2, 1, 128, dtype=torch.float, requires_grad=False)
+    cpg = cpg_utils.CpgUtils()
 
     rate = rospy.Rate(P.CONTROL_HZ)
     while not rospy.is_shutdown():
@@ -263,10 +275,13 @@ def main_controller(robot_state, robot_command, peripherals_state):
             with robot_state.lock:
                 dof_pos = robot_state.angle[:]
                 dof_vel = robot_state.velocity[:]
-            # print(base_quat, base_lin_vel, base_ang_vel, commands, dof_pos, dof_vel, last_actions)
-            obs = mevius_utils.get_policy_observation(base_quat, base_lin_vel, base_ang_vel, commands, dof_pos, dof_vel, last_actions)
-            actions = mevius_utils.get_policy_output(policy, obs)
-            scaled_actions = P.control.action_scale * actions
+            is_standing = (np.linalg.norm(commands) < 0.01)
+            default_dphase = (cpg.base_phase_step * 2 * np.pi / P.control.decimation).reshape(1, -1)
+            is_standing_value = default_dphase if not is_standing else torch.zeros(1, 1)
+            height_scan = torch.normal(0.0, 0.01, (1, 208))
+            obs = mevius_utils.get_policy_observation(base_quat, base_ang_vel, commands, dof_pos, dof_vel, is_standing_value, cpg.phases, cpg.dphases, height_scan)
+            actions, hidden, pred_exte, pred_priv = mevius_utils.get_policy_output(policy, obs, hidden)
+            scaled_actions = cpg.compute_actions(actions, is_standing).numpy()[0]
 
         if command in ["WALK"]:
             ref_angle = [a + b for a, b in zip(scaled_actions, P.DEFAULT_ANGLE[:])]
@@ -547,9 +562,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     rospy.Subscriber("/mevius_command", String, ros_command_callback, (robot_state, robot_command), queue_size=1)
-    rospy.Subscriber("/camera/odom/sample", Odometry, realsense_vel_callback, peripheral_state, queue_size=1)
-    rospy.Subscriber("/camera/gyro/sample", Imu, realsense_gyro_callback, peripheral_state, queue_size=1)
-    rospy.Subscriber("/camera/accel/sample", Imu, realsense_acc_callback, peripheral_state, queue_size=1)
+    # rospy.Subscriber("/camera/odom/sample", Odometry, realsense_vel_callback, peripheral_state, queue_size=1)
+    # rospy.Subscriber("/camera/gyro/sample", Imu, realsense_gyro_callback, peripheral_state, queue_size=1)
+    # rospy.Subscriber("/camera/accel/sample", Imu, realsense_acc_callback, peripheral_state, queue_size=1)
+    rospy.Subscriber("/imu/data", Imu, realsense_imu_callback, peripheral_state, queue_size=1)
     rospy.Subscriber("/spacenav/joy", Joy, spacenav_joy_callback, peripheral_state, queue_size=1)
     rospy.Subscriber("/virtual/joy", Joy, virtual_joy_callback, peripheral_state, queue_size=1)
     main_controller_thread = threading.Thread(target=main_controller, args=(robot_state, robot_command, peripheral_state))

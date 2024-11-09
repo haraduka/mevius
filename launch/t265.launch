@@ -1,0 +1,23 @@
+<launch>
+  <include file="$(find realsense2_camera)/launch/rs_t265.launch">
+    <arg name="enable_pose" value="true"/>
+    <arg name="unite_imu_method" value="linear_interpolation"/>
+    <arg name="publish_odom_tf" value="false"/>
+  </include>
+
+  <node name="realsense_imu_transform" pkg="topic_tools" type="transform" args="
+    /camera/imu /imu/data_raw sensor_msgs/Imu
+    'sensor_msgs.msg.Imu(
+    header=m.header,
+    orientation=m.orientation,
+    orientation_covariance=m.orientation_covariance,
+    angular_velocity=geometry_msgs.msg.Vector3(x=m.angular_velocity.z, y=m.angular_velocity.x, z=m.angular_velocity.y),
+    angular_velocity_covariance=m.angular_velocity_covariance,
+    linear_acceleration=geometry_msgs.msg.Vector3(x=m.linear_acceleration.z, y=m.linear_acceleration.x, z=m.linear_acceleration.y),
+    linear_acceleration_covariance=m.linear_acceleration_covariance
+    )' --import geometry_msgs sensor_msgs rospy numpy --wait-for-start"/>
+
+  <node name="madgwick_filter" pkg="imu_filter_madgwick" type="imu_filter_node" output="screen">
+    <param name="use_mag" value="false"/>
+  </node>
+</launch>
