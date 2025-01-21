@@ -18,7 +18,7 @@ import parameters as P
 
 # TODO add terminal display of thermometer, etc.
 
-np.set_printoptions(precision=3)
+np.set_printoptions(precision=3, suppress=True)
 
 class RobotState:
     def __init__(self, n_motor=12):
@@ -153,6 +153,14 @@ def realsense_acc_callback(msg, params):
         # peripherals_state.body_acc = [msg.linear_acceleration.x, msg.linear_acceleration.y, -msg.linear_acceleration.z]
         # for realsenes arrangement
         peripherals_state.body_acc = [msg.linear_acceleration.z, msg.linear_acceleration.x, msg.linear_acceleration.y]
+
+def realsense_imu_callback(msg, params):
+    peripherals_state = params
+    with peripherals_state.lock:
+        peripherals_state.body_quat = [msg.orientation.x, msg.orientation.y, msg.orientation.z, msg.orientation.w]
+        peripherals_state.body_gyro = [msg.angular_velocity.x, msg.angular_velocity.y, msg.angular_velocity.z]
+        peripherals_state.body_acc = [msg.linear_acceleration.x, msg.linear_acceleration.y, msg.linear_acceleration.z]
+        peripherals_state.realsense_last_time = time.time()
 
 def virtual_joy_callback(msg, params):
     peripherals_state = params
@@ -362,9 +370,9 @@ def can_communication(robot_state, robot_command, peripherals_state):
 
         with robot_state.lock:
             robot_state.angle = pos_list
-            robot_state.velocity = vel_list
-            robot_state.current = cur_list
-            robot_state.temperature = tem_list
+            robot_state.velocity = list(map(lambda x: 0.7*x[0]+0.3*x[1], zip(robot_state.velocity, vel_list)))
+            robot_state.current = list(map(lambda x: 0.7*x[0]+0.3*x[1], zip(robot_state.current, cur_list)))
+            robot_state.temperature = list(map(lambda x: 0.7*x[0]+0.3*x[1], zip(robot_state.temperature, tem_list)))
 
         jointstate_msg.name = P.JOINT_NAME
         jointstate_msg.position = pos_list
@@ -547,9 +555,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     rospy.Subscriber("/mevius_command", String, ros_command_callback, (robot_state, robot_command), queue_size=1)
-    rospy.Subscriber("/camera/odom/sample", Odometry, realsense_vel_callback, peripheral_state, queue_size=1)
-    rospy.Subscriber("/camera/gyro/sample", Imu, realsense_gyro_callback, peripheral_state, queue_size=1)
-    rospy.Subscriber("/camera/accel/sample", Imu, realsense_acc_callback, peripheral_state, queue_size=1)
+    # rospy.Subscriber("/camera/odom/sample", Odometry, realsense_vel_callback, peripheral_state, queue_size=1)
+    # rospy.Subscriber("/camera/gyro/sample", Imu, realsense_gyro_callback, peripheral_state, queue_size=1)
+    # rospy.Subscriber("/camera/accel/sample", Imu, realsense_acc_callback, peripheral_state, queue_size=1)
+    rospy.Subscriber("/imu/data", Imu, realsense_imu_callback, peripheral_state, queue_size=1)
     rospy.Subscriber("/spacenav/joy", Joy, spacenav_joy_callback, peripheral_state, queue_size=1)
     rospy.Subscriber("/virtual/joy", Joy, virtual_joy_callback, peripheral_state, queue_size=1)
     main_controller_thread = threading.Thread(target=main_controller, args=(robot_state, robot_command, peripheral_state))

@@ -28,10 +28,10 @@ STANDBY_ANGLE = [
         ]
 
 DEFAULT_ANGLE = [
-         0.1, 1.0, -1.4, # BL
-        -0.1, 1.0, -1.4, # BR
-         0.1, 0.8, -1.4, # FL
-        -0.1, 0.8, -1.4, # FR
+         0.05, 1.0, -1.4, # BL
+        -0.05, 1.0, -1.4, # BR
+         0.05, 0.8, -1.4, # FL
+        -0.05, 0.8, -1.4, # FR
         ]
 
 DEBUG_ANGLE = [
@@ -43,7 +43,7 @@ DEBUG_ANGLE = [
 
 CONTROL_HZ = 50
 
-CAN_HZ = 50
+CAN_HZ = 200
 
 class commands:
     heading_command = False # if true: compute ang vel command from heading error
@@ -55,10 +55,10 @@ class commands:
 
 class control:
     stiffness = {'collar': 50.0, 'hip': 50.0, 'knee': 30.}  # [N*m/rad]
-    damping = {'collar': 2.0, 'hip': 2.0, 'knee': 0.2}  # [N*m*s/rad]
+    damping = {'collar': 2.0, 'hip': 2.0, 'knee': 0.5}  # [N*m*s/rad]
 
     # action scale: target angle = actionScale * action + defaultAngle
-    action_scale = 0.5
+    action_scale = 0.2
     action_clipping = 20
     decimation = 4
     dt = 0.005

@@ -170,7 +170,7 @@ maxRawKp = 2**12 - 1                            # 12-Bits for Raw Kp Values
 maxRawKd = 2**12 - 1                            # 12-Bits for Raw Kd Values
 maxRawCurrent = 2**12 - 1                       # 12-Bits for Raw Current Values
 dt_sleep = 0.0001                               # Time before motor sends a reply
-set_zero_sleep = 1.5                            # Time to wait after setting zero. Motor takes extra time to set zero.
+set_zero_sleep = 0.5                            # Time to wait after setting zero. Motor takes extra time to set zero.
 
 
 def float_to_uint(x, x_min, x_max, numBits):
