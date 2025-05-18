@@ -206,6 +206,7 @@ def main_controller(robot_state, robot_command, peripherals_state):
     last_actions = [0.0] * 12 # TODO initialize
     hidden = torch.zeros(2, 1, 128, dtype=torch.float, requires_grad=False)
     cpg = cpg_utils.CpgUtils()
+    cpg.reset_trot()
 
     rate = rospy.Rate(P.CONTROL_HZ)
     while not rospy.is_shutdown():
@@ -282,6 +283,7 @@ def main_controller(robot_state, robot_command, peripherals_state):
             obs = mevius_utils.get_policy_observation(base_quat, base_ang_vel, commands, dof_pos, dof_vel, is_standing_value, cpg.phases, cpg.dphases, height_scan)
             actions, hidden, pred_exte, pred_priv = mevius_utils.get_policy_output(policy, obs, hidden)
             scaled_actions = cpg.compute_actions(actions, is_standing).numpy()[0]
+            # scaled_actions = cpg.compute_actions(torch.zeros(1, 16), is_standing).numpy()[0]
 
         if command in ["WALK"]:
             ref_angle = [a + b for a, b in zip(scaled_actions, P.DEFAULT_ANGLE[:])]

@@ -1,5 +1,6 @@
 import os
 import pprint
+import numpy as np
 import torch
 from analytical_ik import ik_3d_leg
 import mevius_utils
@@ -50,6 +51,17 @@ class CpgUtils:
     def _reset_dphase(self):
         self._dphases[:] = self.base_phase_step
 
+    def reset_trot(self):
+        self._phases[:] = 0.0
+        self._phases[:, 1:3] = 0.5
+        self._base_freq[:] = self.default_base_freq
+        self._reset_dphase()
+
+    def reset_stance(self):
+        self._phases[:] = 0.0
+        self._base_freq[:] = self.default_base_freq
+        self._reset_dphase()
+
     def _get_cubic_height(self):
         height = torch.zeros_like(self._phases)
         t = self._phases * 4.0 # 0.0 <= t < 4.0
@@ -94,6 +106,20 @@ class CpgUtils:
 
 if __name__ == "__main__":
     cpg = CpgUtils()
-    for i in range(100):
-        print(cpg.compute_actions(torch.zeros(cpg.num_envs, 16), True)[0])
+    angle_list = []
+    for i in range(50):
+        angle = cpg.compute_actions(torch.zeros(cpg.num_envs, 16), True)[0]
+        angle = angle.detach().cpu().numpy()
+        angle_list.append(angle)
+    for i in range(300):
+        angle = cpg.compute_actions(torch.zeros(cpg.num_envs, 16), False)[0]
+        angle = angle.detach().cpu().numpy()
+        angle_list.append(angle)
+    angle_list = np.array(angle_list)
+    print(angle_list.shape)
+
+    # write to file
+    path = "/tmp/angle_list.pkl"
+    with open(path, "wb") as f:
+        torch.save(angle_list, f)
 

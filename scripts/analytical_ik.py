@@ -222,8 +222,6 @@ if __name__ == "__main__":
         for i in range(3):
             random_q_tensor_3d[:, i] = torch.rand(n) * (range_max[i] - range_min[i]) + range_min[i]
 
-        [0.21955, 0.072, 0.0565]
-
         l1 = 0.0776
         l2 = 0.25
         l3 = 0.235
