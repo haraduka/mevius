@@ -12,9 +12,9 @@ You can find all the hardware components in the following link
 - [Goodle Drive](https://drive.google.com/drive/folders/18i6CWtUG8fkY0rCcbjN5WiUYItjIX0WM?usp=sharing)
 
 From the link of RUBIK LINK V2.0, please download the upper computer installation program and make all the motors MIT mode.
-- [AK70-10](https://store.tmotor.com/product/ak70-10-dynamical-modular.html)
-- [AK Serials Manual](https://store.tmotor.com/images/file/202208/251661393360838805.pdf)
-- [RUBIK LINK V2.0](https://store.tmotor.com/product/rubik-link-v2.html)
+- [AK70-10](https://www.cubemars.com/goods-1031-AK70-10.html)
+- [AK Serials Manual](https://www.cubemars.com/images/file/20241217/1734428582786471.pdf)
+- [RUBIK LINK V2.0](https://www.cubemars.com/goods-1140-RUBIK+LINK+V20.html)
 - Motor Order: FR(1-3) --> FL(4-6) --> BR(7-9) --> BL(10-12) / Proximal --> Distal
 - Link Name: FR_scapula_link --> FR_thigh_link --> FR_calf_link
 - Joint Name: FR_collar --> FR_hip --> FR_knee
@@ -105,7 +105,7 @@ python3 scripts/mevius_main.py --sim
 # Citation
 ```
 @inproceedings{kawaharazuka2024mevius,
-  author={K. Kawaharazuka and S. Inoue and T. Suzuki and S. Yuzai and S. Sawaguchi and K. Okada and M. Inaba},
+  author={K. Kawaharazuka and S. Inoue and T. Suzuki and S. Yuzaki and S. Sawaguchi and K. Okada and M. Inaba},
   title={{MEVIUS: A Quadruped Robot Easily Constructed through E-Commerce with Sheet Metal Welding and Machining}},
   booktitle={Proceedings of the 2024 IEEE-RAS International Conference on Humanoid Robots},
   year=2024,
